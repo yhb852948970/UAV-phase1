@@ -1,0 +1,5 @@
+1. Exposure and gain are set. Right follows left.
+
+2. Problem found:
+1) Whatever the ROS frequency is set, the raw images can only be published in 9 HZ.
+2) In some time points, images are not synchronized.  

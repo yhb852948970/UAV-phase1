@@ -1,0 +1,16 @@
+<launch>
+
+	<node pkg="ueye" name="ueye_camera_driver" type="ueye_node"/>
+	
+	<node pkg="stereo_disparity" name="stereo_algorithm" type="stereo_disparity_node"/>
+
+	<node pkg="depth_to_line_extraction" name="laser_scan" type="depth_to_line_extraction_node"/>
+
+	<node 
+	pkg="rosbag" 
+	name="rosbag_ST" 
+	type="record"
+	args="-o ST.bag camera/image_left camera/image_right camera/image_combine stereo/depth stereo/disparity Hscan Vscan tf"
+	/>
+
+</launch>

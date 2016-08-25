@@ -1,0 +1,157 @@
+// TO DO
+// 1. Cannot only extract one line, not robust
+// 2. How to use the IMU reading to find the correct line.
+
+// ROS headers
+#include <ros/ros.h>
+#include <image_transport/image_transport.h>
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
+#include <sensor_msgs/LaserScan.h>
+#include <sensor_msgs/Imu.h>
+#include <geometry_msgs/Quaternion.h>
+#include <tf/transform_broadcaster.h>
+
+// OpenCV headers
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
+// Global variables
+static const std::string OPENCV_WINDOW = "Input window";
+double IMU_x, IMU_y, IMU_z, IMU_w;
+
+void IMUCallback(const sensor_msgs::Imu::ConstPtr& msg)
+{
+  ROS_INFO("Imu Seq: [%d]", msg->header.seq);
+  ROS_INFO("Imu Orientation x: [%f], y: [%f], z: [%f], w: [%f]", msg->orientation.x,msg->orientation.y,msg->orientation.z,msg->orientation.w);
+  IMU_x = msg->orientation.x;
+  IMU_y = msg->orientation.y;
+  IMU_z = msg->orientation.z;
+  IMU_w = msg->orientation.w;
+}
+
+
+class depth_to_line_extraction
+{
+  ros::NodeHandle nh;
+
+  ros::Publisher Vscan_pub;
+  ros::Publisher Hscan_pub;
+  ros::Subscriber IMU_sub;
+// The next two lines are ZED subscriber
+  image_transport::ImageTransport it;
+  image_transport::Subscriber image_sub;
+
+  unsigned int Vnum_readings;
+  unsigned int Hnum_readings;
+  double laser_frequency;	// Based on the fps of depth image from ZED
+  tf::TransformBroadcaster broadcaster;
+
+  public:
+  depth_to_line_extraction() : it(nh) {	// why assign a NoldeHandle to image_transport?
+
+  	image_sub = it.subscribe("/camera/depth/image_rect_color", 1, &depth_to_line_extraction::imageCallback, this);
+  	Vscan_pub = nh.advertise<sensor_msgs::LaserScan>("Vscan", 1);
+  	Hscan_pub = nh.advertise<sensor_msgs::LaserScan>("Hscan", 1);
+	//IMU_sub = nh.subscribe("imu_data", 1, &IMUCallback);
+   
+  	laser_frequency = 40;
+  
+  	cv::namedWindow(OPENCV_WINDOW);
+  }
+
+  ~depth_to_line_extraction(){
+  	cv::destroyWindow(OPENCV_WINDOW);
+  }
+
+
+  void imageCallback(const sensor_msgs::ImageConstPtr& msg){
+    	
+	cv_bridge::CvImagePtr cv_ptr;	// opencv Mat pointer;
+
+    	try {
+		cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::TYPE_8UC1);
+    	}
+
+    	catch (cv_bridge::Exception& e) {
+      	  	ROS_ERROR("cv_bridge exception: %s", e.what());
+          	return;
+    	}
+    	// Update GUI Window
+
+	//cv::Mat Depth;	// Depth information are stored here
+	//cv::threshold(cv_ptr->image, Depth, 1000, 0, cv::THRESH_TOZERO);
+
+//cv::Mat input_img ;
+//cv::cvtColor(cv::imread("/home/haibo/Desktop/depth0100.png"), input_img, CV_RGB2GRAY);
+
+	Vnum_readings = cv_ptr->image.rows;
+	Hnum_readings = cv_ptr->image.cols;
+ 
+   	ros::Time scan_time = ros::Time::now();	// lookup the ros::Time class
+   	
+	sensor_msgs::LaserScan Vscan;
+   	Vscan.header.stamp = scan_time;
+   	Vscan.header.frame_id = "Vlaser_frame";
+   	Vscan.angle_min = -1.57/4;	// -45 deg to 45 deg
+   	Vscan.angle_max = 1.57/4;
+   	Vscan.angle_increment = (3.14/4) / Vnum_readings;
+   	Vscan.time_increment = (1 / laser_frequency) / (Vnum_readings);
+   	Vscan.range_min = 0;	
+   	Vscan.range_max = 255;
+   	Vscan.ranges.resize((int)(Vnum_readings));
+  
+   	sensor_msgs::LaserScan Hscan;
+   	Hscan.header.stamp = scan_time;
+   	Hscan.header.frame_id = "Hlaser_frame";
+   	Hscan.angle_min = -1.57/2;
+   	Hscan.angle_max = 1.57/2;
+   	Hscan.angle_increment = 3.14/2 / Hnum_readings;
+   	Hscan.time_increment = (1 / laser_frequency) / (Hnum_readings);
+   	Hscan.range_min = 0;
+   	Hscan.range_max = 255;
+   	Hscan.ranges.resize((int)(Hnum_readings));
+  
+// x-axis for horizontal; y-axis for vertical
+
+        //horizontal   	
+        int y=Vnum_readings/2; //get y value from imu need to calibrate
+   	for( int x = 0; x <Hnum_readings; x++){
+      	    Hscan.ranges[x] = cv_ptr->image.at<uchar>(y, x);
+            //input_img.at<uchar>(y, x)=255;
+            //Vscan.intensities[i] = Vintensities[i];
+        }
+     
+        // vertical
+        int x=Hnum_readings/2; //get x value from imu need to calibrate
+        for( int y = 0; y < Vnum_readings; ++y){
+            Vscan.ranges[y] = (int)cv_ptr->image.at<uchar>(y, x);
+            //input_img.at<uchar>(y, x)=255;
+            //Vscan.intensities[i] = Vintensities[i];
+        }
+        
+        Vscan_pub.publish(Vscan);
+        Hscan_pub.publish(Hscan);
+
+        tf::Quaternion qut=tf::createQuaternionFromRPY(-3.14/2, 0, 0);
+        broadcaster.sendTransform(
+        tf::StampedTransform(
+        tf::Transform(qut, tf::Vector3(0, 0.0, 0)),
+        ros::Time::now(),"Hlaser_frame", "Vlaser_frame"));
+
+  	
+
+//ROS_INFO_STREAM("Testing: " << Depth.at<double>(300,300));
+//cv::imshow(OPENCV_WINDOW, cv_ptr->image);
+//cv::waitKey(1);
+ 
+  }	// for imageCallback
+};	// for the class
+
+int main(int argc, char** argv)
+{
+  ros::init(argc, argv, "depth_to_line_extraction");	// The third argument is the cpp filename
+  depth_to_line_extraction dtle;
+  ros::spin();
+  return 0;
+}
