@@ -41,7 +41,7 @@ cv::Mat* get_img(CUeye_Camera& cam)
   catch (CUeyeCameraException & e)
   {
     cout << e.what () << endl;
-    return 0;
+    return false;
   }
   catch (CUeyeFeatureException & e)
   {

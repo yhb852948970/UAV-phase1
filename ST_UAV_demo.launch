@@ -1,0 +1,16 @@
+<launch>
+
+	<node pkg="rosbag" type="play" name="play" launch-prefix="xterm -e" args="$(env HOME)/catkin_ws/src/rosbag_data/Fly_Test_1.bag -l --delay=1 --clock">
+  		<remap from="Hscan" to="Hscan_record"/>
+		<remap from="Vscan" to="Vscan_record"/>
+		<remap from="stereo/depth" to="stereo/depth_record"/>
+		<remap from="stereo/disparity" to="stereo/disparity_record"/>
+	</node>
+
+	<node pkg="stereo_disparity" name="stereo_algorithm" type="stereo_disparity_node"/>
+
+	<node pkg="depth_to_line_extraction" name="laser_scan" type="depth_to_line_extraction_node"/>
+
+	<node pkg="rviz" type="rviz" name="rviz" args="-d $(env HOME)/catkin_ws/src/UAV-phase1/NTU_ST_UAV_P1.rviz"/>
+
+</launch>
