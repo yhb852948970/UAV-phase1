@@ -21,6 +21,8 @@ else(OpenCV_FOUND)
     message("[WARN] OpenCV support not installed. Minimum 2.0 version required")
 endif(OpenCV_FOUND)
 
+find_package(iriutils REQUIRED)
+
 ## Find catkin and any catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -28,12 +30,23 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   sensor_msgs
 )
-catkin_destinations()
+#catkin_destinations()
 
-FIND_PACKAGE(iriutils REQUIRED)
-
-# Declare a catkin package
-catkin_package()
+###################################
+## catkin specific configuration ##
+###################################
+## The catkin_package macro generates cmake config files for your package
+## Declare things to be passed to dependent projects
+## INCLUDE_DIRS: uncomment this if you package contains header files
+## LIBRARIES: libraries you create in this project that dependent projects also need
+## CATKIN_DEPENDS: catkin_packages dependent projects also need
+## DEPENDS: system dependencies of this project that dependent projects also need
+catkin_package(
+  INCLUDE_DIRS include
+  #LIBRARIES ueye
+  CATKIN_DEPENDS roscpp cv_bridge image_transport sensor_msgs
+  DEPENDS system_lib
+)
 
 SET(sources src/ueye_camera.cpp src/ueye_exceptions.cpp)
 SET(headers include/ueye_camera.h include/ueye_exceptions.h)
@@ -98,4 +111,3 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 add_executable(ueye_node src/ueye_node.cpp)
 target_link_libraries(ueye_node ${catkin_LIBRARIES} ${OpenCV_LIBS} ueye_camera)
 add_dependencies(ueye_node ueye_cpp)
-

@@ -12,9 +12,11 @@ find_package(catkin REQUIRED COMPONENTS
   tf
 )
 find_package(OpenCV REQUIRED)
+# find_package(Boost REQUIRED COMPONENTS system)
 
 catkin_package(
-   LIBRARIES depth_to_line_extraction
+   #INCLUDE_DIRS include
+   #LIBRARIES depth_to_line_extraction
    CATKIN_DEPENDS common_msgs cv_bridge geometry image_transport pcl_ros roscpp sensor_msgs std_msgs tf
    DEPENDS system_lib
 )
@@ -22,8 +24,3 @@ catkin_package(
 include_directories( ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} )
 add_executable(depth_to_line_extraction_node src/depth_to_line_extraction_node.cpp)
 target_link_libraries(depth_to_line_extraction_node ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
-
-
-
-
-

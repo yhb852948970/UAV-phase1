@@ -1,6 +1,6 @@
-#include "ueye_camera.h"
-#include "ueye_exceptions.h"
-#include "exceptions.h"
+#include "ueye/ueye_camera.h"
+#include "ueye/ueye_exceptions.h"
+#include "ueye/exceptions.h"
 #include <iostream>
 #include <string>
 #include <sstream>

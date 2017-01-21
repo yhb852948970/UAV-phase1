@@ -1,4 +1,4 @@
-#include "ueye_exceptions.h"
+#include "ueye/ueye_exceptions.h"
 #include <sstream>
 #include <string.h>
 #include <stdio.h>

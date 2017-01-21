@@ -1,6 +1,6 @@
 // ueye_cameras.cpp
 
-#include "ueye_camera.h"
+#include "ueye/ueye_camera.h"
 
 using namespace std;
 
