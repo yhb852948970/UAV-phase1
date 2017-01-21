@@ -1,3 +1,5 @@
+// ueye_cameras.cpp
+
 #include "ueye_camera.h"
 
 using namespace std;
@@ -22,7 +24,7 @@ CUeye_Camera::CUeye_Camera()
   this->params_.param_mode = 0;
   this->params_.file_str = "";
   this->params_.pixel_clock = 20;
-  this->params_.exposure = 0.2;
+  this->params_.exposure = 10;
   this->params_.mirror_updown = false;
   this->params_.mirror_leftright = false;
 }
@@ -102,12 +104,13 @@ void CUeye_Camera::Enable_Event() {
 
 
 int CUeye_Camera::Wait_next_image() {
-    int ret = is_WaitEvent(this->hCam_, IS_SET_EVENT_FRAME, 1000);
+    int ret = is_WaitEvent(this->hCam_, IS_SET_EVENT_FRAME, 100);
     if(ret==IS_SUCCESS)
     return 1;
     else
     return 0;
 }
+
 
 //  GET IMAGE
 // -----------------------------------------------------------------------------
@@ -516,7 +519,7 @@ void CUeye_Camera::set_exposure(const double& exp)
 
 //  SET CAMERA PARAMETERS
 // void CUeye_Camera::setExposure(double *time_ms)
-void CUeye_Camera::getExposure()
+void CUeye_Camera::get_Exposure()
 {
    double time_ms;
    int error = is_Exposure(this->hCam_, IS_EXPOSURE_CMD_GET_EXPOSURE, &time_ms, sizeof(double));

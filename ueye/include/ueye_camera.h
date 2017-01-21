@@ -174,6 +174,7 @@ class CUeye_Camera
 
 
     int Wait_next_image();
+
     /*! \brief Initialize camera to take images
      *
      * Initialize camera, get sensor information, configure parameters, allocate memory and print parameters set
@@ -223,7 +224,7 @@ class CUeye_Camera
     int set_HW_gain_factor(int gain_factor);
     //int query_gain_factor();
     void set_exposure(const double& exp);
-    void getExposure();
+    void get_Exposure();
     /*! \brief Set mirror
      *
      * Set camera mirroring, Updown and Leftright

@@ -1,0 +1,13 @@
+<launch>
+
+	<node pkg="ueye" name="ueye_camera_driver" type="ueye_node" required="true" output="screen">
+		<param name="exposure" value="10" />
+		<param name="image_width" value="752" />
+		<param name="image_heigth" value="480" />
+	</node>
+
+	<node pkg="stereo_gpu" name="stereo_gpu" type="stereo_gpu_node" required="true" output="screen" />
+	
+	<node pkg="rviz" type="rviz" name="pcl_viewer" args="-d $(env HOME)/catkin_ws/src/NTU-ST-UAV/pcl_visualization.rviz"/>
+
+</launch>

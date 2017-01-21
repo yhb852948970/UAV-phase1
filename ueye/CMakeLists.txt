@@ -4,49 +4,40 @@ project(ueye)
 #find the cv support and set HAVE_OPENCV_H for the conditional compilation
 FIND_PACKAGE(OpenCV REQUIRED core highgui)
 
-if (OpenCV_FOUND) 
+if (OpenCV_FOUND)
   if (${OpenCV_VERSION_MAJOR} GREATER 1)
     if (${OpenCV_VERSION_PATCH} GREATER 8)
       message("-- [INFO] Found OpenCV support")
       ADD_DEFINITIONS(-DHAVE_OPENCV_H)
       SET(USE_CV true)
     else (${OpenCV_VERSION_PATCH} GREATER 8)
-      message("At least OpenCV 2.4.8 is required.")
+      message(" minimum requried OpenCV version is 2.4.8")
     endif (${OpenCV_VERSION_PATCH} GREATER 8)
   else(${OpenCV_VERSION_MAJOR} GREATER 1)
     message("[WARN] OpenCV support not installed. Minimum 2.0 version required")
-    message("[WARN] Current version ${OpenCV_VERSION_MAJOR}")    
+    message("[WARN] Current version ${OpenCV_VERSION_MAJOR}")
   endif(${OpenCV_VERSION_MAJOR} GREATER 1)
 else(OpenCV_FOUND)
     message("[WARN] OpenCV support not installed. Minimum 2.0 version required")
 endif(OpenCV_FOUND)
 
 ## Find catkin and any catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg cv_bridge image_transport) 
-# nodelet
-# dynamic_reconfigure
-# sensor_msgs
-# camera_calibration_parsers
-# camera_info_manager
-
-## Declare a catkin package
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES disparity
-#  CATKIN_DEPENDS roscpp rospy std_msgs
-#  DEPENDS system_lib
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+  cv_bridge
+  image_transport
+  sensor_msgs
 )
-
-# driver source files
-SET(sources src/ueye_camera.cpp src/ueye_exceptions.cpp)
-
-# application header files
-SET(headers include/ueye_camera.h include/ueye_exceptions.h)
-
-#set build type
-SET(CMAKE_BUILD_TYPE release) 
+catkin_destinations()
 
 FIND_PACKAGE(iriutils REQUIRED)
+
+# Declare a catkin package
+catkin_package()
+
+SET(sources src/ueye_camera.cpp src/ueye_exceptions.cpp)
+SET(headers include/ueye_camera.h include/ueye_exceptions.h)
+SET(CMAKE_BUILD_TYPE release)
 
 # try to find the ueye library
 FIND_PATH(ueye_camera_INCLUDE_DIR ueye.h /usr/include /usr/local/include)
@@ -76,39 +67,35 @@ IF (ueye_camera_ready)
     ARCHIVE DESTINATION lib/iridrivers)
 
     INSTALL(FILES ${headers} DESTINATION include/iridrivers)
-
     INSTALL(FILES ../Findueye_camera.cmake DESTINATION ${CMAKE_ROOT}/Modules/)
 
     #ADD_SUBDIRECTORY(src)
 ELSE (ueye_camera_ready)
-    MESSAGE(FATAL_ERROR "The system is not ueye_camera capable")
+   MESSAGE(FATAL_ERROR "The system is not ueye_camera capable")
 ENDIF (ueye_camera_ready)
-
-catkin_destinations() # define ${CATKIN_PACKAGE_SHARE_DESTINATION}
 
 #set(UEYE_LIBRARY_PATH /usr/lib)
 find_library(UEYE_LIBRARY ueye_api)
 set(USE_UNOFFICIAL_UEYE_DRIVERS FALSE)
 if(NOT UEYE_LIBRARY)
-  message(STATUS "libueye_api was not found in system's library path")
-  #include(cmake_modules/DownloadUEyeDrivers.cmake)
-  include(cmake_modules/DownloadUEyeDriversUnofficial.cmake)
-  set(UEYE_DRIVER_DIR ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION})
-  if(UEYE_DRIVER_DIR)
-    message(STATUS "Setting UEYE_DRIVER_DIR to: ${UEYE_DRIVER_DIR}")
-  else()
-    set(UEYE_DRIVER_DIR ${CMAKE_CURRENT_BINARY_DIR})
-    message(STATUS "Failed to set UEYE_DRIVER_DIR to: CATKIN_DEVEL_PREFIX/CATKIN_PACKAGE_SHARE_DESTINATION, defaulting to CMAKE_CURRENT_BINARY_DIR: ${UEYE_DRIVER_DIR}")
-  endif()
-  download_ueye_drivers(UEYE_LIBRARY UEYE_INCLUDE_DIR ${UEYE_DRIVER_DIR})
-  message(STATUS "libueye_api library: ${UEYE_LIBRARY}")
-  message(STATUS "libueye_api include: ${UEYE_INCLUDE_DIR}")
-  set(USE_UNOFFICIAL_UEYE_DRIVERS TRUE)
+    message(STATUS "libueye_api was not found in system's library path")
+    #include(cmake_modules/DownloadUEyeDrivers.cmake)
+    include(cmake_modules/DownloadUEyeDriversUnofficial.cmake)
+    set(UEYE_DRIVER_DIR ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION})
+    	if(UEYE_DRIVER_DIR)
+    	    message(STATUS "Setting UEYE_DRIVER_DIR to: ${UEYE_DRIVER_DIR}")
+  	else()
+    	    set(UEYE_DRIVER_DIR ${CMAKE_CURRENT_BINARY_DIR})
+    	    message(STATUS "Failed to set UEYE_DRIVER_DIR to: CATKIN_DEVEL_PREFIX/CATKIN_PACKAGE_SHARE_DESTINATION, defaulting to CMAKE_CURRENT_BINARY_DIR: ${UEYE_DRIVER_DIR}")
+  	endif()
+    download_ueye_drivers(UEYE_LIBRARY UEYE_INCLUDE_DIR ${UEYE_DRIVER_DIR})
+    message(STATUS "libueye_api library: ${UEYE_LIBRARY}")
+    message(STATUS "libueye_api include: ${UEYE_INCLUDE_DIR}")
+    set(USE_UNOFFICIAL_UEYE_DRIVERS TRUE)
 endif()
 
 include_directories(include ${catkin_INCLUDE_DIRS})
-message(${OpenCV_LIBS})
 add_executable(ueye_node src/ueye_node.cpp)
-target_link_libraries(ueye_node ${catkin_LIBRARIES} ${OpenCV_LIBS} ueye_camera) #  ${UEYECAM_LIB_NAME}
+target_link_libraries(ueye_node ${catkin_LIBRARIES} ${OpenCV_LIBS} ueye_camera)
 add_dependencies(ueye_node ueye_cpp)
 
